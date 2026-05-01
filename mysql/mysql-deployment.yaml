@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: initialother-mysql-deployment
+  namespace: initialother
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: initialother-mysql
+  template:
+    metadata:
+      labels:
+        app: initialother-mysql
+    spec:
+      containers:
+        - name: initialother-mysql
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: initialother-mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: initialother-mysql-secret
+                  key: MYSQL_DATABASE
+          volumeMounts:
+            - name: mysql-data-volume
+              mountPath: /var/lib/mysql
+            - name: mysql-dump-volume
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: mysql-data-volume
+          persistentVolumeClaim:
+            claimName: initialother-mysql-pvc
+        - name: mysql-dump-volume
+          configMap:
+            name: initialother-mysql-dump-config

@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: initialother-backend-deployment
+  namespace: initialother
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: initialother-backend
+  template:
+    metadata:
+      labels:
+        app: initialother-backend
+    spec:
+      containers:
+        - name: initialother-backend
+          image: initialother-backend:v2
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+
+          # NEW: HTTP liveness probe using Spring Boot Actuator
+          livenessProbe:
+            httpGet:
+              path: /api/v1/actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # NEW: HTTP readiness probe using Spring Boot Actuator
+          readinessProbe:
+            httpGet:
+              path: /api/v1/actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          envFrom:
+            - configMapRef:
+                name: initialother-backend-config
+            - secretRef:
+                name: initialother-backend-secret
+
+          volumeMounts:
+            - name: backend-logs-volume
+              mountPath: /logs
+
+      volumes:
+        - name: backend-logs-volume
+          persistentVolumeClaim:
+            claimName: initialother-backend-logs-pvc

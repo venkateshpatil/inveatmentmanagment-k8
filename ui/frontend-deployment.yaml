@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: initialother-frontend-deployment
+  namespace: initialother
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: initialother-frontend
+  template:
+    metadata:
+      labels:
+        app: initialother-frontend
+    spec:
+      containers:
+        - name: initialother-frontend
+          image: uiappother:v5
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: config-volume
+              mountPath: /usr/share/nginx/html/public/config.js
+              subPath: config.js
+            - name: logs-volume
+              mountPath: /var/initialother/log/nginx
+            - name: nginx-config-volume
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+      volumes:
+        - name: config-volume
+          configMap:
+            name: initialother-frontend-config
+        - name: logs-volume
+          persistentVolumeClaim:
+            claimName: initialother-frontend-logs-pvc
+        - name: nginx-config-volume
+          configMap:
+            name: initialother-nginx-config

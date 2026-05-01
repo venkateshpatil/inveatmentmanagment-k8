@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: initialother-frontend-config
+  namespace: initialother
+data:
+  config.js: |
+    window.__APP_CONFIG__ = {
+      API_URL: "http://initialother-ui.local1/api/v1"
+    };
