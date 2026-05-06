@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
         - name: initialother-frontend
-          image: uiappother:v5
-          imagePullPolicy: Never
+          image: venkateshp40/saikubeimages:frontend-placeholder
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
           volumeMounts:
