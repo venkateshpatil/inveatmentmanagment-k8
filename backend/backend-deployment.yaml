@@ -16,7 +16,7 @@ spec:
       containers:
         - name: initialother-backend
           image: initialother-backend:v2
-          imagePullPolicy: Never
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
 
