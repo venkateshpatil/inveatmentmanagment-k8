@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'bitnami/kubectl:1.30'
+            image 'bitnami/kubectl:latest'
             args '-u root'
             reuseNode true
         }
