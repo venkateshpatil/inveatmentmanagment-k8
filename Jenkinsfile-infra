@@ -1,0 +1,172 @@
+pipeline {
+    agent {
+        docker {
+            image 'bitnami/kubectl:1.30'
+            args '-u root'
+            reuseNode true
+        }
+    }
+
+    parameters {
+        booleanParam(name: 'DEPLOY_MYSQL', defaultValue: true, description: 'Apply MySQL resources')
+        booleanParam(name: 'DEPLOY_BACKEND_INFRA', defaultValue: true, description: 'Apply backend config/secret/pvc/service/deployment')
+        booleanParam(name: 'DEPLOY_FRONTEND_INFRA', defaultValue: true, description: 'Apply frontend config/pvc/service/deployment')
+        booleanParam(name: 'DEPLOY_INGRESS', defaultValue: true, description: 'Apply ingress')
+        booleanParam(name: 'RECREATE_MYSQL_DUMP_CONFIGMAP', defaultValue: true, description: 'Delete and recreate MySQL dump ConfigMap')
+    }
+
+    environment {
+        KUBECONFIG_CRED = "kubeconfig"
+        NAMESPACE = "initialother"
+    }
+
+    stages {
+        stage('Show Workspace') {
+            steps {
+                sh """
+                pwd
+                ls -la
+                """
+            }
+        }
+
+        stage('Apply Namespace') {
+            steps {
+                withCredentials([file(credentialsId: env.KUBECONFIG_CRED, variable: 'KUBECONFIG_FILE')]) {
+                    sh """
+                    export KUBECONFIG=\$KUBECONFIG_FILE
+                    kubectl apply -f namespace.yaml
+                    """
+                }
+            }
+        }
+
+        stage('Apply MySQL') {
+            when {
+                expression { return params.DEPLOY_MYSQL }
+            }
+            steps {
+                withCredentials([file(credentialsId: env.KUBECONFIG_CRED, variable: 'KUBECONFIG_FILE')]) {
+                    sh """
+                    export KUBECONFIG=\$KUBECONFIG_FILE
+
+                    kubectl apply -f mysql/mysql-secret.yaml
+                    kubectl apply -f mysql/mysql-pvc.yaml
+                    kubectl apply -f mysql/mysql-service.yaml
+                    """
+                }
+            }
+        }
+
+        stage('Recreate MySQL Dump ConfigMap') {
+            when {
+                expression { return params.RECREATE_MYSQL_DUMP_CONFIGMAP }
+            }
+            steps {
+                withCredentials([file(credentialsId: env.KUBECONFIG_CRED, variable: 'KUBECONFIG_FILE')]) {
+                    sh """
+                    export KUBECONFIG=\$KUBECONFIG_FILE
+
+                    kubectl delete configmap initialother-mysql-dump-config -n ${env.NAMESPACE} --ignore-not-found
+
+                    kubectl create configmap initialother-mysql-dump-config \
+                      --from-file=dump.sql=sql/dump.sql \
+                      -n ${env.NAMESPACE}
+                    """
+                }
+            }
+        }
+
+        stage('Apply MySQL Deployment') {
+            when {
+                expression { return params.DEPLOY_MYSQL }
+            }
+            steps {
+                withCredentials([file(credentialsId: env.KUBECONFIG_CRED, variable: 'KUBECONFIG_FILE')]) {
+                    sh """
+                    export KUBECONFIG=\$KUBECONFIG_FILE
+                    kubectl apply -f mysql/mysql-deployment.yaml
+                    """
+                }
+            }
+        }
+
+        stage('Apply Backend Infra') {
+            when {
+                expression { return params.DEPLOY_BACKEND_INFRA }
+            }
+            steps {
+                withCredentials([file(credentialsId: env.KUBECONFIG_CRED, variable: 'KUBECONFIG_FILE')]) {
+                    sh """
+                    export KUBECONFIG=\$KUBECONFIG_FILE
+
+                    kubectl apply -f backend/backend-configmap.yaml
+                    kubectl apply -f backend/backend-secret.yaml
+                    kubectl apply -f backend/backend-pvc.yaml
+                    kubectl apply -f backend/backend-service.yaml
+                    kubectl apply -f backend/backend-deployment.yaml
+                    """
+                }
+            }
+        }
+
+        stage('Apply Frontend Infra') {
+            when {
+                expression { return params.DEPLOY_FRONTEND_INFRA }
+            }
+            steps {
+                withCredentials([file(credentialsId: env.KUBECONFIG_CRED, variable: 'KUBECONFIG_FILE')]) {
+                    sh """
+                    export KUBECONFIG=\$KUBECONFIG_FILE
+
+                    kubectl apply -f ui/frontend-configmap.yaml
+                    kubectl apply -f ui/frontend-nginx-config.yaml
+                    kubectl apply -f ui/frontend-pvc.yaml
+                    kubectl apply -f ui/frontend-service.yaml
+                    kubectl apply -f ui/frontend-deployment.yaml
+                    """
+                }
+            }
+        }
+
+        stage('Apply Ingress') {
+            when {
+                expression { return params.DEPLOY_INGRESS }
+            }
+            steps {
+                withCredentials([file(credentialsId: env.KUBECONFIG_CRED, variable: 'KUBECONFIG_FILE')]) {
+                    sh """
+                    export KUBECONFIG=\$KUBECONFIG_FILE
+
+                    kubectl apply -f ingress.yaml
+                    """
+                }
+            }
+        }
+
+        stage('Validate') {
+            steps {
+                withCredentials([file(credentialsId: env.KUBECONFIG_CRED, variable: 'KUBECONFIG_FILE')]) {
+                    sh """
+                    export KUBECONFIG=\$KUBECONFIG_FILE
+
+                    kubectl get ns
+                    kubectl get pods -n ${env.NAMESPACE}
+                    kubectl get svc -n ${env.NAMESPACE}
+                    kubectl get ingress -n ${env.NAMESPACE}
+                    kubectl get pvc -n ${env.NAMESPACE}
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Infra pipeline SUCCESS"
+        }
+        failure {
+            echo "Infra pipeline FAILED"
+        }
+    }
+}
