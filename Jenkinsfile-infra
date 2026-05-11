@@ -13,6 +13,7 @@ pipeline {
         booleanParam(name: 'DEPLOY_FRONTEND_INFRA', defaultValue: true, description: 'Apply frontend config/pvc/service/deployment')
         booleanParam(name: 'DEPLOY_INGRESS', defaultValue: true, description: 'Apply ingress')
         booleanParam(name: 'RECREATE_MYSQL_DUMP_CONFIGMAP', defaultValue: true, description: 'Delete and recreate MySQL dump ConfigMap')
+        booleanParam(name: 'DEPLOY_MONITORING', defaultValue: true, description: 'Apply Prometheus and Grafana monitoring resources')
     }
 
     environment {
@@ -144,6 +145,9 @@ pipeline {
             }
         }
 stage('Apply Monitoring') {
+    when {
+        expression { return params.DEPLOY_MONITORING }
+    }
     steps {
         withCredentials([file(credentialsId: env.KUBECONFIG_CRED, variable: 'KUBECONFIG_FILE')]) {
             sh """

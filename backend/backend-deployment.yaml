@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: initialother-backend
-          image: venkateshp40/saikubeimages:backend-placeholder
+          image: venkateshp40/saikubeimages:backend-latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
