@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: initialother-prometheus-service
+  namespace: initialother
+spec:
+  selector:
+    app: initialother-prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+  type: ClusterIP
