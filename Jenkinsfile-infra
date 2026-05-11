@@ -143,6 +143,16 @@ pipeline {
                 }
             }
         }
+stage('Apply Monitoring') {
+    steps {
+        withCredentials([file(credentialsId: env.KUBECONFIG_CRED, variable: 'KUBECONFIG_FILE')]) {
+            sh """
+            export KUBECONFIG=\$KUBECONFIG_FILE
+            kubectl apply -f monitoring/
+            """
+        }
+    }
+}
 
         stage('Validate') {
             steps {
