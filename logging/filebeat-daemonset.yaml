@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: initialother-filebeat
+  namespace: initialother
+spec:
+  selector:
+    matchLabels:
+      app: initialother-filebeat
+  template:
+    metadata:
+      labels:
+        app: initialother-filebeat
+    spec:
+      serviceAccountName: initialother-filebeat
+      containers:
+        - name: filebeat
+          image: docker.elastic.co/beats/filebeat:8.15.3
+          args: ["-e", "-strict.perms=false"]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: config
+              mountPath: /usr/share/filebeat/filebeat.yml
+              subPath: filebeat.yml
+            - name: backend-logs-volume
+              mountPath: /logs
+      volumes:
+        - name: config
+          configMap:
+            name: initialother-filebeat-config
+            defaultMode: 0644
+        - name: backend-logs-volume
+          persistentVolumeClaim:
+            claimName: initialother-backend-logs-pvc

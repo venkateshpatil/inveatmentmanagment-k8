@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: initialother-filebeat
+  namespace: initialother
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: initialother-filebeat
+rules:
+  - apiGroups: [""]
+    resources:
+      - pods
+      - namespaces
+      - nodes
+    verbs:
+      - get
+      - watch
+      - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: initialother-filebeat
+subjects:
+  - kind: ServiceAccount
+    name: initialother-filebeat
+    namespace: initialother
+roleRef:
+  kind: ClusterRole
+  name: initialother-filebeat
+  apiGroup: rbac.authorization.k8s.io

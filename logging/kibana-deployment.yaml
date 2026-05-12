@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: initialother-kibana-deployment
+  namespace: initialother
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: initialother-kibana
+  template:
+    metadata:
+      labels:
+        app: initialother-kibana
+    spec:
+      containers:
+        - name: initialother-kibana
+          image: docker.elastic.co/kibana/kibana:8.15.3
+          ports:
+            - containerPort: 5601
+          env:
+            - name: ELASTICSEARCH_HOSTS
+              value: "http://initialother-elasticsearch-service:9200"
+            - name: SERVER_HOST
+              value: "0.0.0.0"

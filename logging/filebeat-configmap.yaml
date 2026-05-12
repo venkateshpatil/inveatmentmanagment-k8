@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: initialother-filebeat-config
+  namespace: initialother
+data:
+  filebeat.yml: |
+    filebeat.inputs:
+      - type: filestream
+        id: initialother-backend-logs
+        enabled: true
+        paths:
+          - /logs/*.log
+
+    output.elasticsearch:
+      hosts: ["http://initialother-elasticsearch-service:9200"]
+
+    setup.kibana:
+      host: "http://initialother-kibana-service:5601"
+
+    logging.level: info
