@@ -14,6 +14,7 @@ pipeline {
         booleanParam(name: 'DEPLOY_INGRESS', defaultValue: true, description: 'Apply ingress')
         booleanParam(name: 'RECREATE_MYSQL_DUMP_CONFIGMAP', defaultValue: true, description: 'Delete and recreate MySQL dump ConfigMap')
         booleanParam(name: 'DEPLOY_MONITORING', defaultValue: true, description: 'Apply Prometheus and Grafana monitoring resources')
+        booleanParam(name: 'DEPLOY_RABBITMQ', defaultValue: true, description: 'Apply RabbitMQ resources')
     }
 
     environment {
@@ -91,7 +92,25 @@ pipeline {
                 }
             }
         }
+stage('Apply RabbitMQ') {
+    when {
+        expression { return params.DEPLOY_RABBITMQ }
+    }
+    steps {
+        withCredentials([file(credentialsId: env.KUBECONFIG_CRED, variable: 'KUBECONFIG_FILE')]) {
+            sh """
+            export KUBECONFIG=\$KUBECONFIG_FILE
 
+            kubectl apply -f rabbitmq/rabbitmq-secret.yaml
+            kubectl apply -f rabbitmq/rabbitmq-pvc.yaml
+            kubectl apply -f rabbitmq/rabbitmq-deployment.yaml
+            kubectl apply -f rabbitmq/rabbitmq-service.yaml
+
+            kubectl rollout status deployment/initialother-rabbitmq-deployment -n ${env.NAMESPACE}
+            """
+        }
+    }
+}
         stage('Apply Backend Infra') {
             when {
                 expression { return params.DEPLOY_BACKEND_INFRA }
