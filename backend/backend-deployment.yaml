@@ -23,9 +23,9 @@ spec:
           resources:
             requests:
               memory: "256Mi"
-              cpu: "250m"
+              cpu: "100m"
             limits:
-              memory: "512Mi"
+              memory: "768Mi"
               cpu: "500m"
 
           # NEW: HTTP liveness probe using Spring Boot Actuator
@@ -33,20 +33,20 @@ spec:
             httpGet:
               path: /api/v1/actuator/health/liveness
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 150
             periodSeconds: 20
             timeoutSeconds: 5
-            failureThreshold: 3
+            failureThreshold: 5
 
           # NEW: HTTP readiness probe using Spring Boot Actuator
           readinessProbe:
             httpGet:
               path: /api/v1/actuator/health/readiness
               port: 8080
-            initialDelaySeconds: 30
+            initialDelaySeconds: 90
             periodSeconds: 10
             timeoutSeconds: 5
-            failureThreshold: 3
+            failureThreshold: 6
 
           envFrom:
             - configMapRef:
