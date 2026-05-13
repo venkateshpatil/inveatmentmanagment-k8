@@ -54,3 +54,15 @@ spec:
                 name: initialother-prometheus-service
                 port:
                   number: 9090
+      
+    - host: kibana.initialother.local
+      http:
+        paths:
+
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: initialother-kibana-service
+                port:
+                  number: 5601
