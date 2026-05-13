@@ -53,6 +53,24 @@ spec:
                 name: initialother-backend-config
             - secretRef:
                 name: initialother-backend-secret
+          env:
+            - name: SPRING_RABBITMQ_HOST
+              value: initialother-rabbitmq-service
+
+            - name: SPRING_RABBITMQ_PORT
+              value: "5672"
+
+            - name: SPRING_RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: initialother-rabbitmq-secret
+                  key: RABBITMQ_DEFAULT_USER
+
+            - name: SPRING_RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: initialother-rabbitmq-secret
+                  key: RABBITMQ_DEFAULT_PASS
 
           volumeMounts:
             - name: backend-logs-volume

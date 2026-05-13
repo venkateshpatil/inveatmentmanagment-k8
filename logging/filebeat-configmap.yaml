@@ -3,14 +3,21 @@ kind: ConfigMap
 metadata:
   name: initialother-filebeat-config
   namespace: initialother
+
 data:
   filebeat.yml: |
+
     filebeat.inputs:
       - type: filestream
         id: initialother-backend-logs
         enabled: true
+
         paths:
           - /logs/*.log
+
+        json.keys_under_root: true
+        json.add_error_key: true
+        json.overwrite_keys: true
 
     output.elasticsearch:
       hosts: ["http://initialother-elasticsearch-service:9200"]
